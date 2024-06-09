@@ -1,4 +1,5 @@
 version: 2
+project_name: zerome
 before:
   hooks:
     - make dep
@@ -17,8 +18,8 @@ builds:
 archives:
   - name_template: "{{ .ProjectName }}-{{ .Version }}.{{ .Os }}-{{ .Arch }}"
 nfpms:
-  - id: ZeroMe
-    package_name: zerome
+  - id: zerome
+    package_name: ZeroMe
     file_name_template: "{{ .ProjectName }}-{{ .Version }}.{{ .Os }}-{{ .Arch }}"
     homepage: https://github.com/clwluvw/zerome
     maintainer: Seena Fallah <seenafallah@gmail.com>
