@@ -17,8 +17,8 @@ builds:
 archives:
   - name_template: "{{ .ProjectName }}-{{ .Version }}.{{ .Os }}-{{ .Arch }}"
 nfpms:
-  - id: zerome
-    package_name: ZeroMe
+  - id: ZeroMe
+    package_name: zerome
     file_name_template: "{{ .ProjectName }}-{{ .Version }}.{{ .Os }}-{{ .Arch }}"
     homepage: https://github.com/clwluvw/zerome
     maintainer: Seena Fallah <seenafallah@gmail.com>
