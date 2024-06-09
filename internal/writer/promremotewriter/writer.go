@@ -20,6 +20,10 @@ type PromRemoteWrite struct {
 	client remote.WriteClient
 }
 
+func (prw *PromRemoteWrite) SetClient(client remote.WriteClient) {
+	prw.client = client
+}
+
 func New(address string, headers map[string]string, timeout time.Duration) (*PromRemoteWrite, error) {
 	u, err := url.Parse(address)
 	if err != nil {

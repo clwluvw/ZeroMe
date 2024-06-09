@@ -48,7 +48,7 @@ func (c *Client) ZeroMe(ctx context.Context, metric Metric) error {
 		return err
 	}
 
-	timeSeries := c.zeroMetric(metric, vector)
+	timeSeries := c.zeroTimeSeries(metric, vector)
 	if len(timeSeries) == 0 {
 		return nil
 	}
@@ -64,12 +64,12 @@ func (c *Client) ZeroMe(ctx context.Context, metric Metric) error {
 	return nil
 }
 
-func (c *Client) zeroMetric(metric Metric, vector model.Vector) []prompb.TimeSeries {
+func (c *Client) zeroTimeSeries(metric Metric, vector model.Vector) []prompb.TimeSeries {
 	timeSeries := make([]prompb.TimeSeries, 0, len(vector))
 
 	for _, sample := range vector {
 		timeSeries = append(timeSeries, prompb.TimeSeries{
-			Labels: c.labels(metric.Name, sample.Metric),
+			Labels: metricToLabels(metric.Name, sample.Metric),
 			Samples: []prompb.Sample{
 				{
 					Timestamp: timestamp.FromTime(sample.Timestamp.Time().Add(-metric.Interval)),
@@ -82,7 +82,7 @@ func (c *Client) zeroMetric(metric Metric, vector model.Vector) []prompb.TimeSer
 	return timeSeries
 }
 
-func (c *Client) labels(metricName string, metric model.Metric) []prompb.Label {
+func metricToLabels(metricName string, metric model.Metric) []prompb.Label {
 	labels := make([]prompb.Label, 0, len(metric)+1)
 
 	for k, v := range metric {

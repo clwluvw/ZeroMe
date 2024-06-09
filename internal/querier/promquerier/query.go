@@ -19,6 +19,10 @@ type PromQuerier struct {
 	v1api v1.API
 }
 
+func (pq *PromQuerier) SetV1API(api v1.API) {
+	pq.v1api = api
+}
+
 func New(address string, headers map[string]string) (*PromQuerier, error) {
 	client, err := api.NewClient(api.Config{
 		Address:      address,
