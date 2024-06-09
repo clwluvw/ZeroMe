@@ -1,0 +1,40 @@
+before:
+  hooks:
+    - make dep
+builds:
+  - env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+    ldflags:
+      - -s -w
+      - -X main.Version={{.Version}}
+      - -X main.Revision={{.Commit}}
+      - -X main.Branch={{.Branch}}
+      - -X main.BuildDate={{.Date}}
+    main: ./cmd/zerome
+archives:
+  - name_template: "{{ .ProjectName }}-{{ .Version }}.{{ .Os }}-{{ .Arch }}"
+nfpms:
+  - id: zerome
+    package_name: ZeroMe
+    file_name_template: "{{ .ProjectName }}-{{ .Version }}.{{ .Os }}-{{ .Arch }}"
+    homepage: https://github.com/clwluvw/zerome
+    maintainer: Seena Fallah <seenafallah@gmail.com>
+    description: Prometheus extension that fills missing zero values in dynamic counter metrics
+    license: GPL-3.0
+    formats:
+      - deb
+      - rpm
+    bindir: /usr/bin
+dockers:
+  - image_templates:
+      - ghcr.io/clwluvw/zerome:latest
+      - ghcr.io/clwluvw/zerome:{{ .Tag }}
+    dockerfile: deployments/release/Dockerfile
+checksum:
+  name_template: "checksums.txt"
+snapshot:
+  name_template: "{{ incpatch .Version }}-next"
+changelog:
+  use: github-native
