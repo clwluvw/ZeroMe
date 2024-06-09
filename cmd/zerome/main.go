@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"flag"
 	"log/slog"
 	"os"
 	"os/signal"
@@ -64,10 +65,24 @@ func buildWriters(cfg map[string]zerome.WriterConfig) map[string]writer.Writer {
 }
 
 func main() {
+	var (
+		configFile string
+		version    bool
+	)
+
+	flag.StringVar(&configFile, "config", "config.yaml", "path to the config file")
+	flag.BoolVar(&version, "version", false, "print version")
+	flag.Parse()
+
 	slog.Info("ZeroMe", "version", Version, "revision", Revision, "branch", Branch, "build_date", BuildDate)
 
+	if version {
+		// the version is logged in the beginning anyway
+		return
+	}
+
 	var cfg zerome.Config
-	if err := zerome.LoadConfig("config.yaml", &cfg); err != nil {
+	if err := zerome.LoadConfig(configFile, &cfg); err != nil {
 		panic(err)
 	}
 
@@ -84,7 +99,6 @@ func main() {
 	zm := zerome.New(metrics)
 
 	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
 
 	var wg sync.WaitGroup
 
