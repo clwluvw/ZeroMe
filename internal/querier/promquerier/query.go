@@ -51,7 +51,10 @@ func (pq *PromQuerier) Query(ctx context.Context, metric string, interval time.D
 		interval.String(),
 	)
 
-	result, warnings, err := pq.v1api.Query(context.Background(), query, time.Now(), v1.WithTimeout(interval/2))
+	// Timeout should be half of the interval
+	timeout := interval / 2 //nolint:gomnd,mnd
+
+	result, warnings, err := pq.v1api.Query(ctx, query, time.Now(), v1.WithTimeout(timeout))
 	if err != nil {
 		return nil, err
 	}
@@ -62,7 +65,7 @@ func (pq *PromQuerier) Query(ctx context.Context, metric string, interval time.D
 
 	v, ok := result.(model.Vector)
 	if !ok {
-		return nil, fmt.Errorf("unexpected result type: %s", result.Type().String())
+		return nil, fmt.Errorf("unexpected result type: %s", result.Type().String()) //nolint:goerr113
 	}
 
 	return v, nil

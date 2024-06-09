@@ -75,17 +75,21 @@ func TestZeroMe(t *testing.T) {
 	mockQuerier.EXPECT().Query(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(queryResult, nil, nil)
 
 	// setup writer mock
-	mockWriter := mock.NewMockWriteClient(ctrl)
-	writer.SetClient(mockWriter)
-	pBuf := proto.NewBuffer(nil)
-	err := pBuf.Marshal(expectedWriteRequest)
-	require.NoError(t, err)
-	snappyBytes := snappy.Encode(nil, pBuf.Bytes())
-	mockWriter.EXPECT().Store(gomock.Any(), snappyBytes, 0).Return(nil)
+	{
+		mockWriter := mock.NewMockWriteClient(ctrl)
+		writer.SetClient(mockWriter)
 
-	client := Client{metrics: []Metric{metric}}
+		pBuf := proto.NewBuffer(nil)
+		err := pBuf.Marshal(expectedWriteRequest)
+		require.NoError(t, err)
 
-	err = client.ZeroMe(context.Background(), metric)
+		snappyBytes := snappy.Encode(nil, pBuf.Bytes())
+		mockWriter.EXPECT().Store(gomock.Any(), snappyBytes, 0).Return(nil)
+	}
+
+	client := New([]Metric{metric})
+
+	err := client.ZeroMe(context.Background(), metric)
 	require.NoError(t, err)
 }
 
@@ -130,7 +134,7 @@ func TestZeroTimeSeries(t *testing.T) {
 		}
 	)
 
-	client := Client{metrics: []Metric{metric}}
+	client := New([]Metric{metric})
 
 	timeSeries := client.zeroTimeSeries(metric, queryResult)
 	require.Equal(t, expectedTimeSeries, timeSeries)

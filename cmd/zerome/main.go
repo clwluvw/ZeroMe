@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"fmt"
+	"log/slog"
 	"os"
 	"os/signal"
 	"sync"
@@ -15,7 +15,15 @@ import (
 	"github.com/clwluvw/zerome/internal/zerome"
 )
 
-func buildQueriers(cfg map[string]zerome.QuerierConfig) (map[string]querier.Querier, error) {
+//nolint:gochecknoglobals
+var (
+	Version   string
+	Revision  string
+	Branch    string
+	BuildDate string
+)
+
+func buildQueriers(cfg map[string]zerome.QuerierConfig) map[string]querier.Querier {
 	queriers := make(map[string]querier.Querier, len(cfg))
 
 	for name, c := range cfg {
@@ -23,19 +31,19 @@ func buildQueriers(cfg map[string]zerome.QuerierConfig) (map[string]querier.Quer
 		case "prometheus":
 			q, err := promquerier.New(c.Address, c.Headers)
 			if err != nil {
-				return nil, err
+				panic(err)
 			}
 
 			queriers[name] = q
 		default:
-			return nil, fmt.Errorf("unknown querier type: %s", c.Type)
+			panic("unknown querier type: " + c.Type)
 		}
 	}
 
-	return queriers, nil
+	return queriers
 }
 
-func buildWriters(cfg map[string]zerome.WriterConfig) (map[string]writer.Writer, error) {
+func buildWriters(cfg map[string]zerome.WriterConfig) map[string]writer.Writer {
 	writers := make(map[string]writer.Writer, len(cfg))
 
 	for name, c := range cfg {
@@ -43,33 +51,28 @@ func buildWriters(cfg map[string]zerome.WriterConfig) (map[string]writer.Writer,
 		case "prometheus":
 			w, err := promremotewriter.New(c.Address, c.Headers, c.Timeout)
 			if err != nil {
-				return nil, err
+				panic(err)
 			}
 
 			writers[name] = w
 		default:
-			return nil, fmt.Errorf("unknown writer type: %s", c.Type)
+			panic("unknown writer type: " + c.Type)
 		}
 	}
 
-	return writers, nil
+	return writers
 }
 
 func main() {
+	slog.Info("ZeroMe", "version", Version, "revision", Revision, "branch", Branch, "build_date", BuildDate)
+
 	var cfg zerome.Config
 	if err := zerome.LoadConfig("config.yaml", &cfg); err != nil {
 		panic(err)
 	}
 
-	queriers, err := buildQueriers(cfg.Queriers)
-	if err != nil {
-		panic(err)
-	}
-
-	writers, err := buildWriters(cfg.Writers)
-	if err != nil {
-		panic(err)
-	}
+	queriers := buildQueriers(cfg.Queriers)
+	writers := buildWriters(cfg.Writers)
 
 	metrics := make([]zerome.Metric, len(cfg.Metrics))
 	for i, m := range cfg.Metrics {
@@ -84,6 +87,7 @@ func main() {
 	defer cancel()
 
 	var wg sync.WaitGroup
+
 	wg.Add(1)
 
 	zm.Run(ctx, &wg)

@@ -1,6 +1,7 @@
 package promquerier
 
 import (
+	"context"
 	"net/http"
 	"testing"
 
@@ -38,11 +39,12 @@ func TestRoundTrip(t *testing.T) {
 				headers: tc.headers,
 			}
 
-			req, err := http.NewRequest("GET", "http://example.com", nil)
+			req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, "http://example.com", nil)
 			require.NoError(t, err)
 
-			_, err = transport.RoundTrip(req)
+			res, err := transport.RoundTrip(req)
 			require.NoError(t, err)
+			res.Body.Close()
 
 			for k, v := range tc.headers {
 				require.Equal(t, v, req.Header.Get(k))

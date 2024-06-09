@@ -31,7 +31,7 @@ func New(address string, headers map[string]string, timeout time.Duration) (*Pro
 	}
 
 	if headers == nil {
-		headers = make(map[string]string, 4)
+		headers = make(map[string]string, 4) //nolint:gomnd,mnd
 	}
 
 	headers["Content-Type"] = "application/x-protobuf"
@@ -60,8 +60,7 @@ func (prw *PromRemoteWrite) Write(ctx context.Context, timeSeries []prompb.TimeS
 	}
 
 	pBuf := proto.NewBuffer(nil)
-	err := pBuf.Marshal(writeReq)
-	if err != nil {
+	if err := pBuf.Marshal(writeReq); err != nil {
 		return err
 	}
 

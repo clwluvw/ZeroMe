@@ -42,9 +42,13 @@ func (c *Client) Run(ctx context.Context, wg *sync.WaitGroup) {
 }
 
 func (c *Client) ZeroMe(ctx context.Context, metric Metric) error {
-	vector, err := metric.querier.Query(ctx, metric.Name, metric.Interval*2, metric.UpLabels)
+	// Query twice the interval to ensure that the metric has a missing data point in the past.
+	queryInterval := metric.Interval * 2 //nolint:gomnd,mnd
+
+	vector, err := metric.querier.Query(ctx, metric.Name, queryInterval, metric.UpLabels)
 	if err != nil {
 		slog.ErrorContext(ctx, "Failed to query metric", "metric", metric.Name, "error", err)
+
 		return err
 	}
 
@@ -56,6 +60,7 @@ func (c *Client) ZeroMe(ctx context.Context, metric Metric) error {
 	err = metric.writer.Write(ctx, timeSeries, nil)
 	if err != nil {
 		slog.ErrorContext(ctx, "Failed to write metric", "metric", metric.Name, "error", err)
+
 		return err
 	}
 

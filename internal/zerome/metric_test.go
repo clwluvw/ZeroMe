@@ -9,6 +9,8 @@ import (
 )
 
 func TestSetQuerier(t *testing.T) {
+	t.Parallel()
+
 	m := Metric{}
 	q := &promquerier.PromQuerier{}
 	m.SetQuerier(q)
@@ -16,6 +18,8 @@ func TestSetQuerier(t *testing.T) {
 }
 
 func TestSetWriter(t *testing.T) {
+	t.Parallel()
+
 	m := Metric{}
 	w := &promremotewriter.PromRemoteWrite{}
 	m.SetWriter(w)

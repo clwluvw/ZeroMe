@@ -1,0 +1,11 @@
+linters:
+  enable-all: true
+  disable:
+    - lll
+    - varnamelen
+    - depguard
+    - wrapcheck
+    - testpackage
+    - tagliatelle
+    - exhaustruct
+    - funlen
