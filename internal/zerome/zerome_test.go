@@ -10,9 +10,11 @@ import (
 	"github.com/clwluvw/zerome/pkg/mock"
 	"github.com/gogo/protobuf/proto"
 	"github.com/golang/snappy"
+	v1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/prometheus/common/model"
 	"github.com/prometheus/prometheus/model/timestamp"
 	"github.com/prometheus/prometheus/prompb"
+	"github.com/prometheus/prometheus/storage/remote"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 )
@@ -91,6 +93,122 @@ func TestZeroMe(t *testing.T) {
 
 	err := client.ZeroMe(context.Background(), metric)
 	require.NoError(t, err)
+}
+
+func TestZeroMe_QueryError(t *testing.T) {
+	t.Parallel()
+
+	var (
+		querier = &promquerier.PromQuerier{}
+		writer  = &promremotewriter.PromRemoteWrite{}
+		metric  = Metric{
+			Name:     "metric",
+			Interval: time.Minute,
+			UpLabels: []string{"job", "instance"},
+			querier:  querier,
+			writer:   writer,
+		}
+		queryErr = &v1.Error{Type: v1.ErrTimeout}
+	)
+
+	ctrl := gomock.NewController(t)
+	t.Cleanup(ctrl.Finish)
+
+	// setup querier mock
+	mockQuerier := mock.NewMockAPI(ctrl)
+	querier.SetV1API(mockQuerier)
+	mockQuerier.EXPECT().Query(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, nil, queryErr)
+
+	// setup writer mock
+	mockWriter := mock.NewMockWriteClient(ctrl)
+	writer.SetClient(mockWriter)
+	mockWriter.EXPECT().Store(gomock.Any(), gomock.Any(), 0).Return(nil).Times(0)
+
+	client := New([]Metric{metric})
+
+	err := client.ZeroMe(context.Background(), metric)
+	require.ErrorIs(t, err, queryErr)
+}
+
+func TestZeroMe_EmptyResult(t *testing.T) {
+	t.Parallel()
+
+	var (
+		querier = &promquerier.PromQuerier{}
+		writer  = &promremotewriter.PromRemoteWrite{}
+		metric  = Metric{
+			Name:     "metric",
+			Interval: time.Minute,
+			UpLabels: []string{"job", "instance"},
+			querier:  querier,
+			writer:   writer,
+		}
+	)
+
+	ctrl := gomock.NewController(t)
+	t.Cleanup(ctrl.Finish)
+
+	// setup querier mock
+	mockQuerier := mock.NewMockAPI(ctrl)
+	querier.SetV1API(mockQuerier)
+	mockQuerier.EXPECT().Query(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(model.Vector{}, nil, nil)
+
+	// setup writer mock
+	mockWriter := mock.NewMockWriteClient(ctrl)
+	writer.SetClient(mockWriter)
+	mockWriter.EXPECT().Store(gomock.Any(), gomock.Any(), 0).Return(nil).Times(0)
+
+	client := New([]Metric{metric})
+
+	err := client.ZeroMe(context.Background(), metric)
+	require.NoError(t, err)
+}
+
+func TestZeroMe_WriteError(t *testing.T) {
+	t.Parallel()
+
+	var (
+		querier = &promquerier.PromQuerier{}
+		writer  = &promremotewriter.PromRemoteWrite{}
+		metric  = Metric{
+			Name:     "metric",
+			Interval: time.Minute,
+			UpLabels: []string{"job", "instance"},
+			querier:  querier,
+			writer:   writer,
+		}
+		nowTime     = time.Now()
+		queryResult = model.Vector{
+			&model.Sample{
+				Metric: model.Metric{
+					"job": "test",
+				},
+				Value:     1,
+				Timestamp: model.Time(timestamp.FromTime(nowTime)),
+			},
+		}
+		writeErr = &remote.HTTPError{}
+	)
+
+	ctrl := gomock.NewController(t)
+	t.Cleanup(ctrl.Finish)
+
+	// setup querier mock
+	mockQuerier := mock.NewMockAPI(ctrl)
+	querier.SetV1API(mockQuerier)
+	mockQuerier.EXPECT().Query(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(queryResult, nil, nil)
+
+	// setup writer mock
+	{
+		mockWriter := mock.NewMockWriteClient(ctrl)
+		writer.SetClient(mockWriter)
+		mockWriter.EXPECT().Store(gomock.Any(), gomock.Any(), 0).Return(writeErr)
+	}
+
+	client := New([]Metric{metric})
+
+	err := client.ZeroMe(context.Background(), metric)
+	require.ErrorIs(t, err, writeErr)
 }
 
 func TestZeroTimeSeries(t *testing.T) {
