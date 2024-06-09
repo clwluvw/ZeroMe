@@ -1,0 +1,21 @@
+queriers:
+  querier1:
+    address: http://localhost:9090/
+    headers:
+      X-Scope-OrgID: tenant
+    type: prometheus
+writers:
+  writer1:
+    address: http://localhost:9090/api/v1/write
+    headers:
+      X-Scope-OrgID: tenant
+    timeout: 30s
+    type: prometheus
+metrics:
+  - name: metric
+    interval: 30s
+    querier: querier1
+    writer: writer1
+    up_labels:
+      - job
+      - instance
