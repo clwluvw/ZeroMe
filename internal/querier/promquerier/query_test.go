@@ -57,15 +57,17 @@ func TestQuery(t *testing.T) {
 		}
 	)
 
+	queryTS := time.Now()
+
 	promQuerier := newPromQuerier(t)
 	promQuerier.mockV1API(t).EXPECT().Query(
 		gomock.Any(),
 		"count_over_time(metric[1m0s]) == 1 and metric and on(job,instance) (count_over_time(up[1m0s]) == 2)",
-		gomock.Any(),
+		queryTS,
 		gomock.Any(),
 	).Return(expectedVector, nil, nil)
 
-	v, err := promQuerier.Query(context.Background(), metric, interval, upLabels)
+	v, err := promQuerier.Query(context.Background(), queryTS, metric, interval, upLabels)
 	require.NoError(t, err)
 	require.Equal(t, expectedVector, v)
 }
@@ -99,15 +101,17 @@ func TestQuery_WithWarnings(t *testing.T) {
 		}
 	)
 
+	queryTS := time.Now()
+
 	promQuerier := newPromQuerier(t)
 	promQuerier.mockV1API(t).EXPECT().Query(
 		gomock.Any(),
 		"count_over_time(metric[1m0s]) == 1 and metric and on(job,instance) (count_over_time(up[1m0s]) == 2)",
-		gomock.Any(),
+		queryTS,
 		gomock.Any(),
 	).Return(expectedVector, v1.Warnings{"warning!"}, nil)
 
-	v, err := promQuerier.Query(context.Background(), metric, interval, upLabels)
+	v, err := promQuerier.Query(context.Background(), queryTS, metric, interval, upLabels)
 	require.NoError(t, err)
 	require.Equal(t, expectedVector, v)
 }
@@ -136,15 +140,17 @@ func TestQuery_UnexpectedResult(t *testing.T) {
 		}
 	)
 
+	queryTS := time.Now()
+
 	promQuerier := newPromQuerier(t)
 	promQuerier.mockV1API(t).EXPECT().Query(
 		gomock.Any(),
 		"count_over_time(metric[1m0s]) == 1 and metric and on(job,instance) (count_over_time(up[1m0s]) == 2)",
-		gomock.Any(),
+		queryTS,
 		gomock.Any(),
 	).Return(returnValue, nil, nil)
 
-	v, err := promQuerier.Query(context.Background(), metric, interval, upLabels)
+	v, err := promQuerier.Query(context.Background(), queryTS, metric, interval, upLabels)
 	require.Error(t, err)
 	require.Nil(t, v)
 }
@@ -160,15 +166,17 @@ func TestQuery_WithErrors(t *testing.T) {
 		expectedErr = &v1.Error{Type: v1.ErrTimeout}
 	)
 
+	queryTS := time.Now()
+
 	promQuerier := newPromQuerier(t)
 	promQuerier.mockV1API(t).EXPECT().Query(
 		gomock.Any(),
 		"count_over_time(metric[1m0s]) == 1 and metric and on(job,instance) (count_over_time(up[1m0s]) == 2)",
-		gomock.Any(),
+		queryTS,
 		gomock.Any(),
 	).Return(nil, nil, expectedErr)
 
-	v, err := promQuerier.Query(context.Background(), metric, interval, upLabels)
+	v, err := promQuerier.Query(context.Background(), queryTS, metric, interval, upLabels)
 	require.ErrorIs(t, err, expectedErr)
 	require.Nil(t, v)
 }
