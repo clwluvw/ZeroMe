@@ -37,7 +37,7 @@ func New(address string, headers map[string]string) (*PromQuerier, error) {
 	}, nil
 }
 
-func (pq *PromQuerier) Query(ctx context.Context, metric string, interval time.Duration, upLabels []string) (model.Vector, error) {
+func (pq *PromQuerier) Query(ctx context.Context, ts time.Time, metric string, interval time.Duration, upLabels []string) (model.Vector, error) {
 	// Metirc has only one data point in the interval and it is present in now time
 	// and the up metric has two data points in the interval.
 	// This is to ensure that the metric has a missing data point in past not present and the exporter was up in the interval.
@@ -54,7 +54,7 @@ func (pq *PromQuerier) Query(ctx context.Context, metric string, interval time.D
 	// Timeout should be half of the interval
 	timeout := interval / 2 //nolint:gomnd,mnd
 
-	result, warnings, err := pq.v1api.Query(ctx, query, time.Now(), v1.WithTimeout(timeout))
+	result, warnings, err := pq.v1api.Query(ctx, query, ts, v1.WithTimeout(timeout))
 	if err != nil {
 		return nil, err
 	}

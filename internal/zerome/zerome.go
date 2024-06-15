@@ -45,7 +45,10 @@ func (c *Client) ZeroMe(ctx context.Context, metric Metric) error {
 	// Query twice the interval to ensure that the metric has a missing data point in the past.
 	queryInterval := metric.Interval * 2 //nolint:gomnd,mnd
 
-	vector, err := metric.querier.Query(ctx, metric.Name, queryInterval, metric.UpLabels)
+	// Add query interval as a delay to cover exporter scrape failures.
+	ts := time.Now().Add(-queryInterval)
+
+	vector, err := metric.querier.Query(ctx, ts, metric.Name, queryInterval, metric.UpLabels)
 	if err != nil {
 		slog.ErrorContext(ctx, "Failed to query metric", "metric", metric.Name, "error", err)
 

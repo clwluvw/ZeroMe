@@ -8,5 +8,5 @@ import (
 )
 
 type Querier interface {
-	Query(ctx context.Context, metric string, interval time.Duration, upLabels []string) (model.Vector, error)
+	Query(ctx context.Context, ts time.Time, metric string, interval time.Duration, upLabels []string) (model.Vector, error)
 }
