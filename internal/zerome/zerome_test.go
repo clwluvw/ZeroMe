@@ -74,7 +74,14 @@ func TestZeroMe(t *testing.T) {
 	// setup querier mock
 	mockQuerier := mock.NewMockAPI(ctrl)
 	querier.SetV1API(mockQuerier)
-	mockQuerier.EXPECT().Query(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(queryResult, nil, nil)
+	mockQuerier.EXPECT().Query(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(
+		func(_, _, _ any, _ ...any) (model.Vector, *v1.Warnings, error) {
+			r := queryResult
+			queryResult = model.Vector{} // return empty result on next call so it will exit the loop
+
+			return r, nil, nil
+		},
+	).Times(2)
 
 	// setup writer mock
 	{
@@ -91,7 +98,7 @@ func TestZeroMe(t *testing.T) {
 
 	client := New([]Metric{metric})
 
-	err := client.ZeroMe(context.Background(), metric)
+	err := client.ZeroMe(context.Background(), nowTime, metric)
 	require.NoError(t, err)
 }
 
@@ -126,7 +133,7 @@ func TestZeroMe_QueryError(t *testing.T) {
 
 	client := New([]Metric{metric})
 
-	err := client.ZeroMe(context.Background(), metric)
+	err := client.ZeroMe(context.Background(), time.Now(), metric)
 	require.ErrorIs(t, err, queryErr)
 }
 
@@ -160,7 +167,7 @@ func TestZeroMe_EmptyResult(t *testing.T) {
 
 	client := New([]Metric{metric})
 
-	err := client.ZeroMe(context.Background(), metric)
+	err := client.ZeroMe(context.Background(), time.Now(), metric)
 	require.NoError(t, err)
 }
 
@@ -207,7 +214,7 @@ func TestZeroMe_WriteError(t *testing.T) {
 
 	client := New([]Metric{metric})
 
-	err := client.ZeroMe(context.Background(), metric)
+	err := client.ZeroMe(context.Background(), nowTime, metric)
 	require.ErrorIs(t, err, writeErr)
 }
 
