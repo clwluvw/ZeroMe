@@ -21,32 +21,42 @@ func New(metrics []Metric) *Client {
 	}
 }
 
-func (c *Client) Run(ctx context.Context, wg *sync.WaitGroup) {
+func (c *Client) Run(ctx context.Context, outerWG *sync.WaitGroup) {
 	for _, metric := range c.metrics {
-		go func(metric Metric, wg *sync.WaitGroup) {
-			defer wg.Done()
+		go func(metric Metric, outerWG *sync.WaitGroup) {
+			defer outerWG.Done()
+
+			var wg sync.WaitGroup
 
 			for {
 				select {
 				case <-ctx.Done():
+					wg.Wait()
+
 					return
 				case <-time.After(metric.Interval):
-					err := c.ZeroMe(ctx, metric)
-					if err != nil {
-						slog.ErrorContext(ctx, "Failed to zero metric", "metric", metric.Name, "error", err)
-					}
+					wg.Add(1)
+
+					go func() {
+						defer wg.Done()
+
+						err := c.ZeroMe(ctx, time.Now(), metric)
+						if err != nil {
+							slog.ErrorContext(ctx, "Failed to zero metric", "metric", metric.Name, "error", err)
+						}
+					}()
 				}
 			}
-		}(metric, wg)
+		}(metric, outerWG)
 	}
 }
 
-func (c *Client) ZeroMe(ctx context.Context, metric Metric) error {
+func (c *Client) ZeroMe(ctx context.Context, nowTime time.Time, metric Metric) error {
 	// Query twice the interval to ensure that the metric has a missing data point in the past.
 	queryInterval := metric.Interval * 2 //nolint:gomnd,mnd
 
 	// Add query interval as a delay to cover exporter scrape failures.
-	ts := time.Now().Add(-queryInterval)
+	ts := nowTime.Add(-queryInterval)
 
 	vector, err := metric.querier.Query(ctx, ts, metric.Name, queryInterval, metric.UpLabels)
 	if err != nil {
@@ -67,9 +77,11 @@ func (c *Client) ZeroMe(ctx context.Context, metric Metric) error {
 		return err
 	}
 
-	slog.InfoContext(ctx, "Zeroed metric", "metric", metric.Name, "vector", vector)
+	for _, s := range vector {
+		slog.InfoContext(ctx, "Zeroed sample", "metric", metric.Name, "sample", s.String())
+	}
 
-	return nil
+	return c.ZeroMe(ctx, nowTime, metric) // Retry until nothing to zero
 }
 
 func (c *Client) zeroTimeSeries(metric Metric, vector model.Vector) []prompb.TimeSeries {
