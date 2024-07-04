@@ -11,7 +11,7 @@ RUN apk add make git
 
 RUN make build
 
-FROM alpine:3.20.0
+FROM alpine:3.20.1
 
 COPY --from=builder /zerome/zerome /usr/local/bin/zerome
 
