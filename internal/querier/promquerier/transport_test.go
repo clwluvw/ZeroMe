@@ -44,7 +44,8 @@ func TestRoundTrip(t *testing.T) {
 
 			res, err := transport.RoundTrip(req)
 			require.NoError(t, err)
-			res.Body.Close()
+			err = res.Body.Close()
+			require.NoError(t, err)
 
 			for k, v := range tc.headers {
 				require.Equal(t, v, req.Header.Get(k))
