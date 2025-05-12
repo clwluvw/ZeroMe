@@ -1,5 +1,5 @@
+version: "2"
 linters:
-  enable-all: true
   disable:
     - lll
     - varnamelen
