@@ -1,4 +1,4 @@
-FROM golang:1.22.4-alpine as builder
+FROM golang:1.24.3-alpine AS builder
 
 WORKDIR /zerome
 
@@ -11,7 +11,7 @@ RUN apk add make git
 
 RUN make build
 
-FROM alpine:3.20.1
+FROM alpine:3.21.3
 
 COPY --from=builder /zerome/zerome /usr/local/bin/zerome
 
