@@ -8,6 +8,7 @@ import (
 	"github.com/gogo/protobuf/proto"
 	"github.com/golang/snappy"
 	"github.com/prometheus/prometheus/prompb"
+	"github.com/prometheus/prometheus/storage/remote"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 )
@@ -79,7 +80,7 @@ func TestWrite(t *testing.T) {
 		gomock.Any(),
 		snappyBytes,
 		0,
-	).Return(nil)
+	).Return(remote.WriteResponseStats{}, nil)
 
 	err = promRemoteWrite.Write(context.Background(), timeSeries, metadata)
 	require.NoError(t, err)

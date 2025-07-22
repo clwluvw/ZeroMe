@@ -66,5 +66,6 @@ func (prw *PromRemoteWrite) Write(ctx context.Context, timeSeries []prompb.TimeS
 
 	snappyBytes := snappy.Encode(nil, pBuf.Bytes())
 
-	return prw.client.Store(ctx, snappyBytes, 0)
+	_, err := prw.client.Store(ctx, snappyBytes, 0)
+	return err
 }

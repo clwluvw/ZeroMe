@@ -93,7 +93,7 @@ func TestZeroMe(t *testing.T) {
 		require.NoError(t, err)
 
 		snappyBytes := snappy.Encode(nil, pBuf.Bytes())
-		mockWriter.EXPECT().Store(gomock.Any(), snappyBytes, 0).Return(nil)
+		mockWriter.EXPECT().Store(gomock.Any(), snappyBytes, 0).Return(remote.WriteResponseStats{}, nil)
 	}
 
 	client := New([]Metric{metric})
@@ -129,7 +129,7 @@ func TestZeroMe_QueryError(t *testing.T) {
 	// setup writer mock
 	mockWriter := mock.NewMockWriteClient(ctrl)
 	writer.SetClient(mockWriter)
-	mockWriter.EXPECT().Store(gomock.Any(), gomock.Any(), 0).Return(nil).Times(0)
+	mockWriter.EXPECT().Store(gomock.Any(), gomock.Any(), 0).Return(remote.WriteResponseStats{}, nil).Times(0)
 
 	client := New([]Metric{metric})
 
@@ -163,7 +163,7 @@ func TestZeroMe_EmptyResult(t *testing.T) {
 	// setup writer mock
 	mockWriter := mock.NewMockWriteClient(ctrl)
 	writer.SetClient(mockWriter)
-	mockWriter.EXPECT().Store(gomock.Any(), gomock.Any(), 0).Return(nil).Times(0)
+	mockWriter.EXPECT().Store(gomock.Any(), gomock.Any(), 0).Return(remote.WriteResponseStats{}, nil).Times(0)
 
 	client := New([]Metric{metric})
 
@@ -209,7 +209,7 @@ func TestZeroMe_WriteError(t *testing.T) {
 	{
 		mockWriter := mock.NewMockWriteClient(ctrl)
 		writer.SetClient(mockWriter)
-		mockWriter.EXPECT().Store(gomock.Any(), gomock.Any(), 0).Return(writeErr)
+		mockWriter.EXPECT().Store(gomock.Any(), gomock.Any(), 0).Return(remote.WriteResponseStats{}, writeErr)
 	}
 
 	client := New([]Metric{metric})

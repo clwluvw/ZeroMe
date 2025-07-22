@@ -13,6 +13,7 @@ import (
 	context "context"
 	reflect "reflect"
 
+	remote "github.com/prometheus/prometheus/storage/remote"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -68,15 +69,16 @@ func (mr *MockWriteClientMockRecorder) Name() *gomock.Call {
 }
 
 // Store mocks base method.
-func (m *MockWriteClient) Store(arg0 context.Context, arg1 []byte, arg2 int) error {
+func (m *MockWriteClient) Store(ctx context.Context, req []byte, retryAttempt int) (remote.WriteResponseStats, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Store", arg0, arg1, arg2)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret := m.ctrl.Call(m, "Store", ctx, req, retryAttempt)
+	ret0, _ := ret[0].(remote.WriteResponseStats)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // Store indicates an expected call of Store.
-func (mr *MockWriteClientMockRecorder) Store(arg0, arg1, arg2 any) *gomock.Call {
+func (mr *MockWriteClientMockRecorder) Store(ctx, req, retryAttempt any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Store", reflect.TypeOf((*MockWriteClient)(nil).Store), arg0, arg1, arg2)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Store", reflect.TypeOf((*MockWriteClient)(nil).Store), ctx, req, retryAttempt)
 }
