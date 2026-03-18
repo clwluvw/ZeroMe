@@ -1,4 +1,4 @@
-FROM alpine:3.22.1
+FROM alpine:latest
 
 COPY zerome /usr/local/bin/zerome
 
