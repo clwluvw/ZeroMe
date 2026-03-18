@@ -12,3 +12,7 @@ updates:
     directory: "/deployments/release"
     schedule:
       interval: "monthly"
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: "monthly"
