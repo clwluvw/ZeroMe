@@ -1,7 +1,21 @@
 # ZeroMe
 
+> [!WARNING]
+> **This project is retired and no longer maintained.**
+> Prometheus now injects the missing zero samples itself with the [Start (Created) Timestamps Zero Injection](https://prometheus.io/docs/prometheus/latest/feature_flags/#start-created-timestamps-zero-injection) feature flag.
+> Use it instead of ZeroMe; see [Migrating to Prometheus](#migrating-to-prometheus).
+
 ZeroMe provides a workaround for the issue described in [Prometheus issue #3886](https://github.com/prometheus/prometheus/issues/3886).
 It fetches dynamic (appearing and disappearing) metrics at their scrape interval and checks for missing zero values before the metrics appear.
+
+## Migrating to Prometheus
+
+1. Start Prometheus with `--enable-feature=created-timestamp-zero-ingestion`.
+1. Make sure the scraped applications expose start (created) timestamps. Unlike ZeroMe, Prometheus cannot inject the zero sample without them.
+   Prometheus reads them from the Prometheus protobuf format (recommended) or from OpenMetrics 1.0 `_created` series, and negotiates protobuf first when the flag is enabled, unless `scrape_protocols` is set explicitly.
+1. Stop ZeroMe. If the remote write receiver or the out-of-order ingestion window was enabled only for ZeroMe, disable it as well.
+
+The rest of this document describes how ZeroMe works and is kept for reference.
 
 ## Prometheus Query
 
